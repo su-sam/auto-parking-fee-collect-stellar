@@ -31,7 +31,7 @@ exit-BLE -> App: challenge + $BLEAccID
 App -> App : compare(Enter.$BLEAccID, Exit.$BLEAccID)
 App -> exit-BLE:  BLE.tx.memo(App.@).mD(App.$appAccID, empty)
 
-exit-BLE -> Stellar :  get mD(App.$appAccID), mD(App.$license) , $EnterTimestamp from $BLEAccID.tx where memo(App.@)
+exit-BLE -> Stellar :  get mD(App.$appAccID), mD(App.$license) , $EnterTimestamp from $BLEAccID.tx where App.@
 Stellar -> exit-BLE : mD(App.$appAccID), mD(App.$license),$EnterTimestamp
 
 exit-BLE -> exit-BLE:compare(mD(App.$license), camera.$license)\ncompare(mD(App.$appAccID), App.$appAccID)
