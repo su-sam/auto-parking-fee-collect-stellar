@@ -9,14 +9,15 @@ entry-BLE -> openALPR : get camera.$license
 openALPR -> entry-BLE : camera.$license
 
 entry-BLE -> App: challenge + $BLEAccID
-App -> entry-BLE: BLE.tx.memo(App.@).mD(App.$appAccID, App.$license)
+App -> entry-BLE: response + BLE.tx.mD(App.$appAccID, App.$license)
 
 entry-BLE -> entry-BLE:compare(camera.$license,App.$license)
 
-entry-BLE -> entry-Gate: open gate command
-
-entry-BLE -> Stellar : sign(BLE.tx.memo(App.@).mD(App.$appAccID, App.$license)
+entry-BLE -> Stellar : sign(BLE.tx.mD(App.$appAccID, App.$license)
 Stellar -> entry-BLE : $txEnterMDID
+Stellar -> App : $txEnterMDID
+
+entry-BLE -> entry-Gate: open gate command
 end
 
 
@@ -29,23 +30,30 @@ openALPR -> exit-BLE : camera.$license
 
 exit-BLE -> App: challenge + $BLEAccID
 App -> App : compare(Enter.$BLEAccID, Exit.$BLEAccID)
-App -> exit-BLE:  BLE.tx.memo(App.@).mD(App.$appAccID, empty)
+App -> exit-BLE:  response + $txEnterMDID + BLE.tx.mD(App.$appAccID, empty)
 
-exit-BLE -> Stellar :  get mD(App.$appAccID), mD(App.$license) , $EnterTimestamp from $BLEAccID.tx where App.@
-Stellar -> exit-BLE : mD(App.$appAccID), mD(App.$license),$EnterTimestamp
+exit-BLE -> Stellar :  get $sourceID, mD(App.$appAccID), mD(App.$license) , $EnterTimestamp where App.$txEnterMDID
+Stellar -> exit-BLE : $sourceID, mD(App.$appAccID), mD(App.$license), $EnterTimestamp
 
-exit-BLE -> exit-BLE:compare(mD(App.$license), camera.$license)\ncompare(mD(App.$appAccID), App.$appAccID)
+exit-BLE -> exit-BLE : compare($sourceID, $BLEAccID)
+exit-BLE -> exit-BLE: compare(mD(App.$license), camera.$license)\ncompare(mD(App.$appAccID), App.$appAccID)
 
-exit-BLE -> Stellar : sign(BLE.tx.memo(App.@).mD(App.$appAccID, empty))
-Stellar -> exit-BLE : $txExitMemoID
+exit-BLE -> Stellar : sign(BLE.tx.mD(App.$appAccID, empty))
+Stellar -> exit-BLE : $txExitMDID
 
-exit-BLE -> Stellar : get $ExitTimeStamp where $txExitMemoID
+exit-BLE -> Stellar : get $ExitTimeStamp where $txExitMDID
 Stellar -> exit-BLE : $EnterTimestamp, $ExitTimeStamp
 
 exit-BLE -> exit-BLE : calculate $amount
-exit-BLE -> App: challenge + $DestAccID + $amount
-App -> exit-BLE: sign(Dest&App.tx.memo(App.@).payment($DestAccID, $amount))
-exit-BLE -> Stellar : sign(signed(Dest&App.tx.memo(App.@).payment($DestAccID, $amount)))
+
+exit-BLE -> App: $BLEAccID + $amount
+
+App -> App : compare(new.$BLEAccID, exist.$BLEAccID)
+App -> exit-BLE: sign(BLE&App.tx.memo(App.@).payment($BLEAccID, $amount))
+
+exit-BLE -> exit-BLE : compare(payment($BLEAccID), exist.$BLEAccID)\ncompare(payment($amount),exist.$amount)
+exit-BLE -> Stellar : sign(signed(Dest&App.tx.payment($BLEAccID, $amount)))
 Stellar -> exit-BLE : $txPaymentID
+
 exit-BLE -> exit-Gate: open gate command
 end 
