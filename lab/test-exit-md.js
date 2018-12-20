@@ -3,7 +3,7 @@ StellarSdk.Network.useTestNetwork();
 const server = new StellarSdk.Server('https://horizon-testnet.stellar.org');
 
 // ===============================A=P=P===============================
-// params @BLEAccID from challenge-response
+// params BLE Account ID from BLE challenge
 const blePK = 'GC3VDJXZKI6JK6Q5LL5AHS6LXVDQG5T6LDGLYJADDIDYXLN2EPUYRBKM';
 // App Store his data
 const appKeys = StellarSdk.Keypair.fromSecret('SBSFFFZP53H37E7RFWSVPRG3JE3BMQT25HLIOQOBCTPY5RKJVG6GFQ4H');
@@ -32,9 +32,9 @@ async function createEnvelope(blePK, vehicleNo) {
     const tx = new StellarSdk.TransactionBuilder(bleAcc)
     .addOperation(StellarSdk.Operation.manageData({
         name : appKeys.publicKey(),
-        value : vehicleNo
+        value : ''
     }))
-    //.addMemo(StellarSdk.Memo.text('entry'))
+    //.addMemo(StellarSdk.Memo.text('exit'))
     .build()
 
     // create envelope
@@ -42,8 +42,14 @@ async function createEnvelope(blePK, vehicleNo) {
 
     return envelope;
 }
+// FUNCTION for compare new-bleAccId with exist-bleAccId
+function compareAccId(accId1, accId2){
+
+}
 
 // ===============================B=L=E===============================
+// params enter's transaction hash from App response
+const txEnterId = 'd34ad8f43a6f543e8c689ad4ef9644797791aec969b93183870fba0f1eee0f10'
 // params from camera
 const camVehicleNo = '1กง6798';
 // BLE Store his data
@@ -54,23 +60,31 @@ const signTransaction = async (envelope) => {
     const dataName = envelope._attributes.tx._attributes.operations[0]._attributes.body._value._attributes.dataName;
     const dataValue = envelope._attributes.tx._attributes.operations[0]._attributes.body._value._attributes.dataValue;
     // is there vehicle no. correct?
-    if((compare(camVehicleNo, dataValue)) === 0 ) await signTx(envelope, dataName); // then sign the tx
+    if((compareVehicleNo(camVehicleNo, dataValue)) === 0 ) {
+        const result = await submitTransaction(envelope, dataName); // then sign the tx
+        return result.hash;
+    }
     else console.log('Vehicle number from application is not correct');
 }
 
 // FUNCTION for compare camera's and app's
-function compare(camVehicleNo, txVehicleNo) {
+function compareVehicleNo(camVehicleNo, txVehicleNo) {
     const buf = Buffer.from(camVehicleNo);
     // txVehicle is already be a Buffer
     return(buf.compare(txVehicleNo));
 }
 
+// FUNCTION for compare account address
+function compareAccId(accId1, accId2){
+
+}
+
 // FUNCTION for import envelope -> sign the envelope w/t bleSK
-async function signTx(envelope, appAccId) {
+async function submitTransaction(envelope, appAccId) {
     // isValid Account
     const bleAcc = await server.loadAccount(blePK);
     if(!bleAcc) return console.log('Invalid BLE Account ID', blePK);
-    const appAcc = await server.loadAccount(appKeys.publicKey());
+    const appAcc = await server.loadAccount(appAccId);
     if(!appAcc) return console.log('Invalid Account ID');
     // check is App have native
     const appAccBalanceNaive = appAcc.balances.find(item => item.asset_type === 'native')
@@ -91,19 +105,28 @@ async function signTx(envelope, appAccId) {
     tx.sign(bleKeys);
 
     // submit transaction
-    try {
-        await server.submitTransaction(tx);
-    } catch(e) {
-        console.log('error when sumit tx: ', e)
-    }
+    return await server.submitTransaction(tx);
+}
+
+// FUNCTION for get TIMESTAMP for calculate Fee
+async function getTime(txId) {
+
 }
 
 // ==============================T=E=S=T===============================
 async function start() {
     // App create envelope
     const envelope = await createEnvelope(blePK, vehicleNo);
+    // BLE use txEnterId from App for get Timestamp, enter-dataName, enter-dataValue
+
+    // then check information -> use enter-dataName to compare w/t exit-dataName, 
+    //                               enter-dataValue to compare w/t camVehicleNo
+
     // BLE sign transaction
-    await signTransaction(envelope);
+    const txExitId = await signTransaction(envelope);
+    // BLE use txExitId for get Timestamp
+
+
 }
 start();
 
