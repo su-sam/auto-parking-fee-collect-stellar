@@ -41,7 +41,7 @@ exit-BLE -> exit-BLE: compare(mD(App.$license), camera.$license)\ncompare(mD(App
 exit-BLE -> Stellar : sign(BLE.tx.mD(App.$appAccID, empty))
 Stellar -> exit-BLE : $txExitMDID
 
-exit-BLE -> Stellar : get $ExitTimeStamp where $txExitMDID
+exit-BLE -> Stellar : get $EnterTimeStamp, $ExitTimeStamp where $txEnterMDID, $txExitMDID
 Stellar -> exit-BLE : $EnterTimestamp, $ExitTimeStamp
 
 exit-BLE -> exit-BLE : calculate $amount
