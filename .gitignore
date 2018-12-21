@@ -1,2 +1,8 @@
 node_modules/
-/.vscode/
+**/lab/decode-xdr.js
+**/lab/encode.js
+**/lab/playground.js
+**/lab/test-entry-md.js
+**/lab/test-exit-md.js
+**/lab/txViewer.js
+.vscode
