@@ -1,7 +1,7 @@
 const StellarSdk = require('stellar-sdk');
 StellarSdk.Network.useTestNetwork();
 const server = new StellarSdk.Server('https://horizon-testnet.stellar.org');
-const {Transaction} = require('stellar-base'); // only BLE
+const {Transaction} = require('stellar-base');
 
 // ===============================A=P=P===============================
 // Account ID that stored from the begining
@@ -12,8 +12,8 @@ const newBlePK = 'GC3VDJXZKI6JK6Q5LL5AHS6LXVDQG5T6LDGLYJADDIDYXLN2EPUYRBKM';
 const appKeys = StellarSdk.Keypair.fromSecret('SBSFFFZP53H37E7RFWSVPRG3JE3BMQT25HLIOQOBCTPY5RKJVG6GFQ4H');
 const vehicleNo = '1กง6798';
 
-// FUNCTION for create transaction envelope
-const createManageDataEnvelope = async (newBlePK) => {
+// FUNCTION for create transaction xdr
+const createManageDataXDR = async (newBlePK) => {
     // is BLE acc still the same ?
     if(!(oldBlePK.trim() === newBlePK.trim())) {
         throw new Error('CANNOT TRUSTED THIS ID: BLE Account ID \'s changed');
@@ -38,7 +38,7 @@ const createManageDataEnvelope = async (newBlePK) => {
     if (nativeBalance < MAX_BALANCE_ALLOWANCE) {
         throw new Error(`App Account must have balance > ${MAX_BALANCE_ALLOWANCE}`);
     }
-    // create new transaction envelope
+    // create new transaction xdr
     const tx = new StellarSdk.TransactionBuilder(bleAcc)
     .addOperation(StellarSdk.Operation.manageData({
         name : appKeys.publicKey(),
@@ -46,9 +46,9 @@ const createManageDataEnvelope = async (newBlePK) => {
     }))
     //.addMemo(StellarSdk.Memo.text('exit'))
     .build()
-    // create envelope
-    const envelope = await tx.toEnvelope();
-    return envelope;
+    // create transactin XDR
+    const txXDR = await tx.toEnvelope().toXDR().toString("base64");
+    return txXDR;
 }
 
 // ===============================B=L=E===============================
@@ -60,7 +60,7 @@ const camVehicleNo = '1กง6798';
 const bleKeys = StellarSdk.Keypair.fromSecret('SCMWGMAIPDRXWYDMSFXSOJO5NQ2DXSSTQYAT3FQ67M2GSRMCNAYUHU5Y');
 
 // FUNCTION to sign transaction
-const signExitManageData = async (envelope, txEnterId) => {
+const signExitManageData = async (txXDR, txEnterId) => {
     // get $sourceID, mD(App.$appAccID), mD(App.$license) from txEnterId
     const txResult = await transactionViewer(txEnterId); // json
     // BLE check is txEnterID valid ?
@@ -71,42 +71,40 @@ const signExitManageData = async (envelope, txEnterId) => {
     const tx_result = new Transaction(txResult.envelope_xdr);
     const txEnterDataName = tx_result.tx._attributes.operations[0]._attributes.body._value._attributes.dataName; // Buffer
     const txEnterDataValue = tx_result.tx._attributes.operations[0]._attributes.body._value._attributes.dataValue; // Buffer
-    // read the envelope
-    const envelopeDataName = envelope._attributes.tx._attributes.operations[0]._attributes.body._value._attributes.dataName;
-    const envelopeDataValue = envelope._attributes.tx._attributes.operations[0]._attributes.body._value._attributes.dataValue;
+    // read the xdr
+    const transaction = new Transaction(txXDR);
+    const txDataName = transaction.operations[0].name;
+    const txDataValue = transaction.operations[0].value;
     // is transaction datavalue correct ?
-    const isDataValueEmpty = isEmpty(envelopeDataValue);
-    if(!isDataValueEmpty) {
+    if(txDataValue) {
         throw new Error('Wrong operation\'s data in Transaction');
     }
+    // is there vehicle no. correct?
+    if(!((compareWithBuffer(camVehicleNo, txEnterDataValue)) === 0 )){
+        throw new Error ('Vehicle number from application is not correct');
+    }
+    // is acc still the same ? 
+    if(!((compareWithBuffer(txDataName.trim(), txEnterDataName)) === 0 )) {
+        throw new Error ('account ID has been changed');
+    } 
+    // then sign the tx
     // sign the trasaction
-    if((compareWithBuffer(camVehicleNo, txEnterDataValue)) === 0 ) // is there vehicle no. correct?
-        if((compareWithBuffer(envelopeDataName,txEnterDataName)) === 0) // is acc still the same ?
-        {   // then sign the tx
-            const result = await submitTransaction(envelope, envelopeDataName); 
-            return result.hash;
-        } else console.log('account ID has been changed');
-    else console.log('Vehicle number from application is not correct');
+    const result = await submitTransaction(txXDR, txDataName); 
+    return result.hash;
+    
 }
-
 // FUNCTION for a string and a buffer
 function compareWithBuffer(notBufYet, beBuff) {
     const buf = Buffer.from(notBufYet);
     // beBuff is already be a Buffer
     return(buf.compare(beBuff)); // return -1,0,1 but 0 if equal
 }
-
-function isEmpty(dataValue) {
-    if (dataValue === null) return true;
-    return false;
-}
-
-// FUNCTION for import envelope -> sign the envelope w/t bleSK
-const submitTransaction = async (envelope, appAccId) => {
+// FUNCTION for import transaction -> sign the transaction w/t bleSK
+const submitTransaction = async (txXDR, appAccId) => {
     // isValid Account
     const bleAcc = await server.loadAccount(bleKeys.publicKey());
     if(!bleAcc) {
-        throw new Error('Invalid BLE Account ID', bleKeys.publicKey);
+        throw new Error('Invalid BLE Account ID', bleKeys.publicKey());
     }
     const appAcc = await server.loadAccount(appAccId);
     if(!appAcc) {
@@ -124,8 +122,8 @@ const submitTransaction = async (envelope, appAccId) => {
         throw new Error(`App Account must have balance > ${MAX_BALANCE_ALLOWANCE}`);
     }
     // create new transaction
-    const tx = new StellarSdk.Transaction(envelope);
-    // sign envelope
+    const tx = new StellarSdk.Transaction(txXDR);
+    // sign transaction
     tx.sign(bleKeys);
     // submit transaction
     return await server.submitTransaction(tx);
@@ -134,11 +132,10 @@ const transactionViewer = async (txId) => {
     return await server.transactions().transaction(txId).call();
 }
 
-
 // ==============================T=E=S=T===============================
 const start = async () => {
     // App create envelope
-    const envelope = await createManageDataEnvelope(newBlePK); //then send "envelope" & "enterTxId" to BLE
+    const envelope = await createManageDataXDR(newBlePK); //then send "envelope" & "enterTxId" to BLE
     // BLE sign manage data transaction
     const txExitId = await signExitManageData(envelope, txEnterId);
     console.log(txExitId);

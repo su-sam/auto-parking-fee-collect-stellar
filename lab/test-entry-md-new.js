@@ -1,6 +1,7 @@
 const StellarSdk = require('stellar-sdk');
 StellarSdk.Network.useTestNetwork();
 const server = new StellarSdk.Server('https://horizon-testnet.stellar.org');
+const {Transaction} = require('stellar-base'); 
 
 // ===============================A=P=P===============================
 // params @BLEAccID from challenge-response
@@ -9,8 +10,8 @@ const blePK = 'GC3VDJXZKI6JK6Q5LL5AHS6LXVDQG5T6LDGLYJADDIDYXLN2EPUYRBKM';
 const appKeys = StellarSdk.Keypair.fromSecret('SBSFFFZP53H37E7RFWSVPRG3JE3BMQT25HLIOQOBCTPY5RKJVG6GFQ4H');
 const vehicleNo = '1กง6798';
 
-// FUNCTION for create transaction envelope
-const createManageDataEnvelope = async (blePK) => {
+// FUNCTION for create transaction XDR
+const createManageDataXDR = async (blePK) => {
     // isValid Account
     const bleAcc = await server.loadAccount(blePK);
     if(!bleAcc) {
@@ -31,7 +32,7 @@ const createManageDataEnvelope = async (blePK) => {
     if (nativeBalance < MAX_BALANCE_ALLOWANCE) {
         throw new Error(`App Account must have balance > ${MAX_BALANCE_ALLOWANCE}`);
     }
-    // create new transaction envelope
+    // create new transaction XDR
     const tx = new StellarSdk.TransactionBuilder(bleAcc)
     .addOperation(StellarSdk.Operation.manageData({
         name : appKeys.publicKey(),
@@ -39,9 +40,9 @@ const createManageDataEnvelope = async (blePK) => {
     }))
     //.addMemo(StellarSdk.Memo.text('entry'))
     .build()
-    // create envelope
-    const envelope = await tx.toEnvelope();
-    return envelope;
+    // create XDR
+    const txXDR = await tx.toEnvelope().toXDR().toString("base64");
+    return txXDR;
 }
 
 // ===============================B=L=E===============================
@@ -51,12 +52,13 @@ const camVehicleNo = '1กง6798';
 const bleKeys = StellarSdk.Keypair.fromSecret('SCMWGMAIPDRXWYDMSFXSOJO5NQ2DXSSTQYAT3FQ67M2GSRMCNAYUHU5Y');
 
 // FUNCTION to sign transaction
-const signEnterManageData = async (envelope) => {
-    const envelopeDataName = envelope._attributes.tx._attributes.operations[0]._attributes.body._value._attributes.dataName;
-    const envelopeDataValue = envelope._attributes.tx._attributes.operations[0]._attributes.body._value._attributes.dataValue;
+const signEnterManageData = async (txXDR) => {
+    const transaction = new Transaction(txXDR);
+    const txDataName = transaction.operations[0].name;
+    const txDataValue = transaction.operations[0].value;
     // is there vehicle no. correct?
-    if((compareWithBuffer(camVehicleNo, envelopeDataValue)) === 0 ) {
-        const result = await submitTransaction(envelope, envelopeDataName); // then sign the tx
+    if((compareWithBuffer(camVehicleNo, txDataValue)) === 0 ) {
+        const result = await submitTransaction(txXDR, txDataName.trim()); // then sign the tx
         return result.hash;
     }
     else console.log('Vehicle number from application is not correct');
@@ -67,12 +69,12 @@ function compareWithBuffer(notBufYet, beBuff) {
     // beBuff is already be a Buffer
     return(buf.compare(beBuff)); // return -1,0,1 but 0 if equal
 }
-// FUNCTION for import envelope -> sign the envelope w/t bleSK
-const submitTransaction = async (envelope, appAccId) => {
+// FUNCTION for import transaction XDR -> sign the XDR w/t bleSK
+const submitTransaction = async (txXDR, appAccId) => {
     // isValid Account
-    const bleAcc = await server.loadAccount(blePK);
+    const bleAcc = await server.loadAccount(bleKeys.publicKey());
     if(!bleAcc) {
-        throw new Error('Invalid BLE Account ID', blePK);
+        throw new Error('Invalid BLE Account ID', bleKeys.publicKey());
     }
     const appAcc = await server.loadAccount(appAccId);
     if(!appAcc) {
@@ -90,8 +92,8 @@ const submitTransaction = async (envelope, appAccId) => {
         throw new Error(`App Account must have balance > ${MAX_BALANCE_ALLOWANCE}`);
     }
     // create new transaction
-    const tx = new StellarSdk.Transaction(envelope);
-    // sign envelope
+    const tx = new StellarSdk.Transaction(txXDR);
+    // sign transaction
     tx.sign(bleKeys);
     // submit transaction
     return await server.submitTransaction(tx);
@@ -99,10 +101,10 @@ const submitTransaction = async (envelope, appAccId) => {
 
 // ==============================T=E=S=T===============================
 const start = async () => {
-    // App create envelope
-    const envelope = await createManageDataEnvelope(blePK); // then send "envelope" to BLE
+    // App create transaction
+    const txXDR = await createManageDataXDR(bleKeys.publicKey()); // then send "transaction XDR" to BLE
     // BLE sign transaction
-    const txEnterId = await signEnterManageData(envelope);
+    const txEnterId = await signEnterManageData(txXDR);
     console.log(txEnterId); // then send "txEnterId" back to App for store
 }
 start();

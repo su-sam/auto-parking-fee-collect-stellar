@@ -1,2 +1,4 @@
 node_modules/
 .vscode
+/lab/test-entry-md.js
+/lab/test-exit-md.js
