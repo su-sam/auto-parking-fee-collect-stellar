@@ -32,7 +32,7 @@ exit-BLE -> App: challenge + $BLEAccID
 App -> App : compare(Enter.$BLEAccID, Exit.$BLEAccID)
 App -> exit-BLE:  response + $txEnterMDID + BLE.tx.mD(App.$appAccID, empty)
 
-exit-BLE -> Stellar :  get $sourceID, mD(App.$appAccID), mD(App.$license) , $EnterTimestamp where App.$txEnterMDID
+exit-BLE -> Stellar :  get $sourceID, mD(App.$appAccID), mD(App.$license) where App.$txEnterMDID
 Stellar -> exit-BLE : $sourceID, mD(App.$appAccID), mD(App.$license)
 
 exit-BLE -> exit-BLE : compare($sourceID, $BLEAccID)
