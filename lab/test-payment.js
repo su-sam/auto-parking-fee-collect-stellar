@@ -13,7 +13,7 @@ const appKeys = StellarSdk.Keypair.fromSecret('SBSFFFZP53H37E7RFWSVPRG3JE3BMQT25
 const vehicleNo = '1กง6798'; // not use
 
 // FUNCTION to create transaction envelope
-async function createPaymentEnvelope(enteringBlePK, fee) {
+async function createPaymentTransaction(enteringBlePK, fee) {
     // is BLE acc still the same ?
     if(!compareAccID(existingBlePK, enteringBlePK)) {
         throw new Error('CANNOT TRUSTED THIS ID: BLE Account ID \'s changed')
@@ -50,10 +50,9 @@ async function createPaymentEnvelope(enteringBlePK, fee) {
     //.addMemo(StellarSdk.Memo.text('payment'))
     .build()
     // 1st signer
-    // tx.sign(appKeys);
-    // create envelope
-    const envelope = await tx.toEnvelope();
-    return envelope;
+    tx.sign(appKeys);
+    // return transaction
+    return tx;
 }
 
 function compareAccID(accId1, accId2) {
@@ -84,30 +83,32 @@ function calculateFee(enterTime, exitTime){
 
     return amount.toString();
 }
+
 // FUNCTION for sign transaction
-const signPayment = async (envelope) => {
+const signPayment = async (tx) => {
     // read the envelope
-    const envelopeDestinationAccId = envelope._attributes.tx._attributes.operations[0]._attributes.body._value._attributes.destination._value; // Buffer
-    const envelopeAmount = envelope._attributes.tx._attributes.operations[0]._attributes.body._value._attributes.amount.low; // Number
-    const assetType = envelope._attributes.tx._attributes.operations[0]._attributes.body._value._attributes.asset._switch.name; // String
-    const envelopeOperationSourceAccId = envelope._attributes.tx._attributes.operations[0]._attributes.sourceAccount._value; // Buffer
+    const txDestinationAccId = tx._attributes.tx._attributes.operations[0]._attributes.body._value._attributes.destination._value; // ??? Buffer
+    const txAmount = tx._attributes.tx._attributes.operations[0]._attributes.body._value._attributes.amount.low; // not Number
+    const txAssetType = tx._attributes.tx._attributes.operations[0]._attributes.body._value._attributes.asset._switch.name; // String
+    const txOperationSourceAccId = tx._attributes.tx._attributes.operations[0]._attributes.sourceAccount._value; // ??? not Buffer
     // is app pay with native asset
-    if(!(assetType === 'assetTypeNative')) throw new Error('Please pay with native XLM');
+    if(!(txAssetType === 'assetTypeNative')) throw new Error('Please pay with native XLM');
     // sign the trasaction
-    if((compareWithBuffer(bleKeys.publicKey(), envelopeDestinationAccId)) === 0 ) // is app pay foe BLE ?
-        if(envelopeAmount/10000000 === AMOUNT) // is app pay with correct amount ?
+    if((compareWithBuffer(bleKeys.publicKey(), txDestinationAccId)) === 0 ) // is app pay foe BLE ?
+        // *****error cuz envelopeDestinationAccId is not a 'base-64 normail buffer'
+        if(txAmount/10000000 === AMOUNT) // is app pay with correct amount ?
         {   // then sign the tx
-            const result = await submitTransaction(envelope, envelopeOperationSourceAccId); 
+            const result = await submitTransaction(tx, txOperationSourceAccId); 
             return result.hash;
-        } else console.log('Wrong amount in Transaction', envelopeAmount);
-    else console.log('Wrong Destination Id in Transaction', envelopeDestinationAccId);
+        } else console.log('Wrong amount in Transaction', txAmount);
+    else console.log('Wrong Destination Id in Transaction', txDestinationAccId);
 }
 // FUNCTION for import envelope -> sign the envelope w/t bleSK
 async function submitTransaction(envelope, appAccId) {
     // isValid Account
     const bleAcc = await server.loadAccount(bleKeys.publicKey());
     if(!bleAcc) return console.log('Invalid BLE Account ID', bleKeys.publicKey);
-    const appAcc = await server.loadAccount(appAccId);
+    const appAcc = await server.loadAccount(appAccId); // *****error cuz appAccId is not 'String'
     if(!appAcc) return console.log('Invalid Account ID');
     // check is App have native
     const appAccBalanceNaive = appAcc.balances.find(item => item.asset_type === 'native')
@@ -134,9 +135,6 @@ async function transactionViewer(txId){
 // FUNCTION for a string and a buffer
 function compareWithBuffer(notBufYet, beBuff) {
     const buf = Buffer.from(notBufYet);
-    console.log(notBufYet);
-    console.log(buf);
-    console.log(beBuff);
     // beBuff is already be a Buffer
     return(buf.compare(beBuff)); // return -1,0,1 but 0 if equal
 }
@@ -147,13 +145,10 @@ async function start() {
     const enterTimestamp = await getTimestamp(txEnterId);
     const exitTimestamp = await getTimestamp(txExitId);
     const amount = calculateFee(enterTimestamp, exitTimestamp); //then send "amount" & "accId" to App
-    // App create envelope
-    const envelope = await createPaymentEnvelope(enteringBlePK, amount);
-    // for debug
-    debugger
-    console.log(envelope);
+    // App create transaction
+    const tx = await createPaymentTransaction(enteringBlePK, amount);
     // BLE sign manage data transaction
-    const txPaymentId = await signPayment(envelope);
+    const txPaymentId = await signPayment(tx);
     console.log(txPaymentId);
 }
 start();

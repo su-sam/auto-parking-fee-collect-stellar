@@ -58,7 +58,7 @@ function compareAccID(accId1, accId2) {
 
 // ===============================B=L=E===============================
 // params from App
-const txEnterId = 'df89307c5c7e841b2220da2f8a2514aa869979455e0955032322c08a0bc1e53f'
+const txEnterId = 'f19b9b09fa655243de8ede28c2e9e81e3f381a2406146d7e805dc929cdbede2c'
 // params from camera
 const camVehicleNo = '1กง6798';
 // BLE Store his data
@@ -76,16 +76,16 @@ const signExitManageData = async (envelope, txEnterId) => {
     const txEnterDataName = tx_result.tx._attributes.operations[0]._attributes.body._value._attributes.dataName; // Buffer
     const txEnterDataValue = tx_result.tx._attributes.operations[0]._attributes.body._value._attributes.dataValue; // Buffer
     // read the envelope
-    const dataName = envelope._attributes.tx._attributes.operations[0]._attributes.body._value._attributes.dataName;
-    const dataValue = envelope._attributes.tx._attributes.operations[0]._attributes.body._value._attributes.dataValue;
+    const envelopeDataName = envelope._attributes.tx._attributes.operations[0]._attributes.body._value._attributes.dataName;
+    const envelopeDataValue = envelope._attributes.tx._attributes.operations[0]._attributes.body._value._attributes.dataValue;
     // is transaction datavalue correct ?
-    const isDataValueEmpty = isEmpty(dataValue);
+    const isDataValueEmpty = isEmpty(envelopeDataValue);
     if(!isDataValueEmpty) throw new Error('Wrong operation\'s data in Transaction');
     // sign the trasaction
     if((compareWithBuffer(camVehicleNo, txEnterDataValue)) === 0 ) // is there vehicle no. correct?
-        if((compareWithBuffer(dataName,txEnterDataName)) === 0) // is acc still the same ?
+        if((compareWithBuffer(envelopeDataName,txEnterDataName)) === 0) // is acc still the same ?
         {   // then sign the tx
-            const result = await submitTransaction(envelope, dataName); 
+            const result = await submitTransaction(envelope, envelopeDataName); 
             return result.hash;
         } else console.log('account ID has been changed');
     else console.log('Vehicle number from application is not correct');

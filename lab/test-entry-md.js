@@ -48,11 +48,11 @@ const bleKeys = StellarSdk.Keypair.fromSecret('SCMWGMAIPDRXWYDMSFXSOJO5NQ2DXSSTQ
 
 // FUNCTION to sign transaction
 const signEnterManageData = async (envelope) => {
-    const dataName = envelope._attributes.tx._attributes.operations[0]._attributes.body._value._attributes.dataName;
-    const dataValue = envelope._attributes.tx._attributes.operations[0]._attributes.body._value._attributes.dataValue;
+    const envelopeDataName = envelope._attributes.tx._attributes.operations[0]._attributes.body._value._attributes.dataName;
+    const envelopeDataValue = envelope._attributes.tx._attributes.operations[0]._attributes.body._value._attributes.dataValue;
     // is there vehicle no. correct?
-    if((compareWithBuffer(camVehicleNo, dataValue)) === 0 ) {
-        const result = await submitTransaction(envelope, dataName); // then sign the tx
+    if((compareWithBuffer(camVehicleNo, envelopeDataValue)) === 0 ) {
+        const result = await submitTransaction(envelope, envelopeDataName); // then sign the tx
         return result.hash;
     }
     else console.log('Vehicle number from application is not correct');
