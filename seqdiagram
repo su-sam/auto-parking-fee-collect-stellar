@@ -33,7 +33,7 @@ App -> App : compare(Enter.$BLEAccID, Exit.$BLEAccID)
 App -> exit-BLE:  response + $txEnterMDID + BLE.tx.mD(App.$appAccID, empty)
 
 exit-BLE -> Stellar :  get $sourceID, mD(App.$appAccID), mD(App.$license) , $EnterTimestamp where App.$txEnterMDID
-Stellar -> exit-BLE : $sourceID, mD(App.$appAccID), mD(App.$license), $EnterTimestamp
+Stellar -> exit-BLE : $sourceID, mD(App.$appAccID), mD(App.$license)
 
 exit-BLE -> exit-BLE : compare($sourceID, $BLEAccID)
 exit-BLE -> exit-BLE: compare(mD(App.$license), camera.$license)\ncompare(mD(App.$appAccID), App.$appAccID)
