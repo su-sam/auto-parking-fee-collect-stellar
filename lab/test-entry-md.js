@@ -9,8 +9,8 @@ const blePK = 'GC3VDJXZKI6JK6Q5LL5AHS6LXVDQG5T6LDGLYJADDIDYXLN2EPUYRBKM';
 const appKeys = StellarSdk.Keypair.fromSecret('SBSFFFZP53H37E7RFWSVPRG3JE3BMQT25HLIOQOBCTPY5RKJVG6GFQ4H');
 const vehicleNo = '1กง6798';
 
-// FUNCTION to create transaction envelope
-async function createEnvelope(blePK, vehicleNo) {
+// FUNCTION for create transaction envelope
+async function createManageDataEnvelope(blePK) {
     // isValid Account
     const bleAcc = await server.loadAccount(blePK);
     if(!bleAcc) return console.log('Invalid BLE Account ID', blePK);
@@ -27,7 +27,6 @@ async function createEnvelope(blePK, vehicleNo) {
     if (nativeBalance < MAX_BALANCE_ALLOWANCE) {
         throw new Error(`App Account must have balance > ${MAX_BALANCE_ALLOWANCE}`)
     }
-
     // create new transaction envelope
     const tx = new StellarSdk.TransactionBuilder(bleAcc)
     .addOperation(StellarSdk.Operation.manageData({
@@ -36,10 +35,8 @@ async function createEnvelope(blePK, vehicleNo) {
     }))
     //.addMemo(StellarSdk.Memo.text('entry'))
     .build()
-
     // create envelope
     const envelope = await tx.toEnvelope();
-
     return envelope;
 }
 
@@ -50,24 +47,22 @@ const camVehicleNo = '1กง6798';
 const bleKeys = StellarSdk.Keypair.fromSecret('SCMWGMAIPDRXWYDMSFXSOJO5NQ2DXSSTQYAT3FQ67M2GSRMCNAYUHU5Y');
 
 // FUNCTION to sign transaction
-const signTransaction = async (envelope) => {
+const signEnterManageData = async (envelope) => {
     const dataName = envelope._attributes.tx._attributes.operations[0]._attributes.body._value._attributes.dataName;
     const dataValue = envelope._attributes.tx._attributes.operations[0]._attributes.body._value._attributes.dataValue;
     // is there vehicle no. correct?
-    if((compareVehicleNo(camVehicleNo, dataValue)) === 0 ) {
+    if((compareWithBuffer(camVehicleNo, dataValue)) === 0 ) {
         const result = await submitTransaction(envelope, dataName); // then sign the tx
         return result.hash;
     }
     else console.log('Vehicle number from application is not correct');
 }
-
-// FUNCTION for compare camera's and app's
-function compareVehicleNo(camVehicleNo, txVehicleNo) {
-    const buf = Buffer.from(camVehicleNo);
-    // txVehicle is already be a Buffer
-    return(buf.compare(txVehicleNo));
+// FUNCTION for a string and a buffer
+function compareWithBuffer(notBufYet, beBuff) {
+    const buf = Buffer.from(notBufYet);
+    // beBuff is already be a Buffer
+    return(buf.compare(beBuff)); // return -1,0,1 but 0 if equal
 }
-
 // FUNCTION for import envelope -> sign the envelope w/t bleSK
 async function submitTransaction(envelope, appAccId) {
     // isValid Account
@@ -86,13 +81,10 @@ async function submitTransaction(envelope, appAccId) {
     if (nativeBalance < MAX_BALANCE_ALLOWANCE) {
         throw new Error(`App Account must have balance > ${MAX_BALANCE_ALLOWANCE}`)
     }
-
     // create new transaction
     const tx = new StellarSdk.Transaction(envelope)
-
     // sign envelope
     tx.sign(bleKeys);
-
     // submit transaction
     return await server.submitTransaction(tx);
 }
@@ -100,10 +92,10 @@ async function submitTransaction(envelope, appAccId) {
 // ==============================T=E=S=T===============================
 async function start() {
     // App create envelope
-    const envelope = await createEnvelope(blePK, vehicleNo);
+    const envelope = await createManageDataEnvelope(blePK); // then send "envelope" to BLE
     // BLE sign transaction
-    const txEnterId = await signTransaction(envelope);
-    console.log(txEnterId); // then send txId back to App for store
+    const txEnterId = await signEnterManageData(envelope);
+    console.log(txEnterId); // then send "txEnterId" back to App for store
 }
 start();
 
