@@ -51,7 +51,7 @@ exit-BLE -> App: $BLEAccID + $amount
 App -> App : compare(new.$BLEAccID, exist.$BLEAccID)
 App -> exit-BLE: sign(BLE&App.tx.memo(App.@).payment($BLEAccID, $amount))
 
-exit-BLE -> exit-BLE : compare(payment(destination.$BLEAccID), $BLEAccID)\ncompare(payment(amount.$fee),$amount)
+exit-BLE -> exit-BLE : compare(payment(destination.$BLEAccID), $BLEAccID)\ncompare(payment(amount.$fee),$amount)\nisXLM(payment(asset))
 exit-BLE -> Stellar : sign(signed(BLEt&App.tx.payment($BLEAccID, $amount)))
 Stellar -> exit-BLE : $txPaymentID
 
