@@ -53,7 +53,7 @@ const createManageDataXDR = async (newBlePK) => {
 
 // ===============================B=L=E===============================
 // params from App
-const txEnterId = 'f19b9b09fa655243de8ede28c2e9e81e3f381a2406146d7e805dc929cdbede2c';
+const txEnterId = '0fbd56ac199a88149c2e1c9d7233b7bb1a487149901499fc9efe321bc77aba1b';
 // params from camera
 const camVehicleNo = '1กง6798';
 // BLE Store his data
@@ -134,10 +134,10 @@ const transactionViewer = async (txId) => {
 
 // ==============================T=E=S=T===============================
 const start = async () => {
-    // App create envelope
-    const envelope = await createManageDataXDR(newBlePK); //then send "envelope" & "enterTxId" to BLE
+    // App create transaction XDR
+    const txXDR = await createManageDataXDR(newBlePK); //then send "txXDR" & "enterTxId" to BLE
     // BLE sign manage data transaction
-    const txExitId = await signExitManageData(envelope, txEnterId);
+    const txExitId = await signExitManageData(txXDR, txEnterId);
     console.log(txExitId);
 }
 start();

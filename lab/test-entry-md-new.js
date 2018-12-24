@@ -57,11 +57,11 @@ const signEnterManageData = async (txXDR) => {
     const txDataName = transaction.operations[0].name;
     const txDataValue = transaction.operations[0].value;
     // is there vehicle no. correct?
-    if((compareWithBuffer(camVehicleNo, txDataValue)) === 0 ) {
-        const result = await submitTransaction(txXDR, txDataName.trim()); // then sign the tx
-        return result.hash;
+    if(!((compareWithBuffer(camVehicleNo, txDataValue)) === 0 )) {
+        throw new Error('Vehicle number from application is not correct')
     }
-    else console.log('Vehicle number from application is not correct');
+    const result = await submitTransaction(txXDR, txDataName.trim()); // then sign the tx
+    return result.hash;
 }
 // FUNCTION for a string and a buffer
 function compareWithBuffer(notBufYet, beBuff) {

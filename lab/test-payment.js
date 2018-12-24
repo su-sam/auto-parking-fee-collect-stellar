@@ -59,12 +59,13 @@ const createPaymentTransaction = async (enteringBlePK, fee) => {
 
 // ===============================B=L=E===============================
 // for test
-const AMOUNT = 0.4861111;
+const AMOUNT = 0.8069444;
 // params that BLE already knew
-const txEnterId = 'df89307c5c7e841b2220da2f8a2514aa869979455e0955032322c08a0bc1e53f'; // from app
-const txExitId = '3505db1646a35bfee238b2e22e4aa37142f324a45daae8d57ff96cb6bd2e5f93'; // from last submited 
+const txEnterId = '0fbd56ac199a88149c2e1c9d7233b7bb1a487149901499fc9efe321bc77aba1b'; // from app
+const txExitId = 'ea7a616d01d9a1ba73e838011099f67163dfa479f084839de0c99948a1a30fd6'; // from last submited 
 // BLE Store his data
 const bleKeys = StellarSdk.Keypair.fromSecret('SCMWGMAIPDRXWYDMSFXSOJO5NQ2DXSSTQYAT3FQ67M2GSRMCNAYUHU5Y');
+
 // FUNCTION for get timeStamp
 const getTimestamp = async (txId) => {
     const tx_result = await transactionViewer(txId);
@@ -150,12 +151,13 @@ const start = async () => {
     // BLE get time stamp
     const enterTimestamp = await getTimestamp(txEnterId);
     const exitTimestamp = await getTimestamp(txExitId);
+    // BLE calculate fee
     const amount = calculateFee(enterTimestamp, exitTimestamp); 
     //then send "BLEAccId" & "amount" to App
     // App create transaction
-    const tx = await createPaymentTransaction(enteringBlePK, amount);
+    const txXDR = await createPaymentTransaction(enteringBlePK, amount);
     // BLE sign manage data transaction
-    const txPaymentId = await signPayment(tx);
+    const txPaymentId = await signPayment(txXDR);
     console.log(txPaymentId);
 }
 start();
