@@ -6,3 +6,4 @@ node_modules/
 **/lab/test-exit-md.js
 **/lab/txViewer.js
 .vscode
+**/lab/calculate-duration.js

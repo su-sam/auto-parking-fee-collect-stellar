@@ -2,6 +2,7 @@ const StellarSdk = require('stellar-sdk');
 StellarSdk.Network.useTestNetwork();
 const server = new StellarSdk.Server('https://horizon-testnet.stellar.org');
 const {Transaction} = require('stellar-base');
+const moment = require('moment');
 
 // ===============================A=P=P===============================
 // Account ID that stored
@@ -11,6 +12,7 @@ const enteringBlePK = 'GC3VDJXZKI6JK6Q5LL5AHS6LXVDQG5T6LDGLYJADDIDYXLN2EPUYRBKM'
 // App Store his data
 const appKeys = StellarSdk.Keypair.fromSecret('SBSFFFZP53H37E7RFWSVPRG3JE3BMQT25HLIOQOBCTPY5RKJVG6GFQ4H');
 const vehicleNo = '1กง6798'; // not use
+
 
 // FUNCTION to create transaction 
 const createPaymentTransaction = async (enteringBlePK, fee) => {
@@ -43,8 +45,7 @@ const createPaymentTransaction = async (enteringBlePK, fee) => {
     .addOperation(StellarSdk.Operation.payment({
         destination : enteringBlePK,
         asset : StellarSdk.Asset.native(),
-        amount : "100",
-        // amount : fee,
+        amount : fee,
         source : appKeys.publicKey()
     }))
     //.addMemo(StellarSdk.Memo.text('payment'))
@@ -58,7 +59,7 @@ const createPaymentTransaction = async (enteringBlePK, fee) => {
 
 // ===============================B=L=E===============================
 // for test
-const AMOUNT = 100;
+const AMOUNT = 0.4861111;
 // params that BLE already knew
 const txEnterId = 'df89307c5c7e841b2220da2f8a2514aa869979455e0955032322c08a0bc1e53f'; // from app
 const txExitId = '3505db1646a35bfee238b2e22e4aa37142f324a45daae8d57ff96cb6bd2e5f93'; // from last submited 
@@ -72,10 +73,18 @@ const getTimestamp = async (txId) => {
 // FUNCTION for calculate fee
 function calculateFee(enterTime, exitTime){
     // timestamp duration
-    console.log(enterTime);
-    console.log(exitTime);
-    const amount =100;
-
+    const startTime = moment(enterTime);
+    const endTime = moment(exitTime);
+    // different millisec
+    const diff = endTime.diff(startTime);
+    const duration = moment.duration(diff);
+    // how long user park
+    const hours = duration.asHours();
+    // fee rate
+    const feePerHour = 35;
+    // calculate fee
+    let amount =hours*feePerHour;
+    amount = amount.toPrecision(7);
     return amount.toString();
 }
 // FUNCTION for sign transaction
@@ -141,7 +150,8 @@ const start = async () => {
     // BLE get time stamp
     const enterTimestamp = await getTimestamp(txEnterId);
     const exitTimestamp = await getTimestamp(txExitId);
-    const amount = calculateFee(enterTimestamp, exitTimestamp); //then send "BLEAccId" & "amount" to App
+    const amount = calculateFee(enterTimestamp, exitTimestamp); 
+    //then send "BLEAccId" & "amount" to App
     // App create transaction
     const tx = await createPaymentTransaction(enteringBlePK, amount);
     // BLE sign manage data transaction
