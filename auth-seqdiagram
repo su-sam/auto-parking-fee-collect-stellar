@@ -1,0 +1,35 @@
+@https://www.websequencediagrams.com
+
+title TOTP authentication
+Camera -> Server : send license plate img
+Server -> openALPR : get vehicle no.
+openALPR -> Server : vehicle no.
+opt entry
+opt enrollment
+App -> Server : request shared-key (send vehicle no.)
+Server -> Server : compare(Camera's vehicle no., App's vehicle no.)
+Server -> Server : generate key
+Server -> App: share shared-key
+end
+opt login
+App -> App : implements TOTP
+App -> Server : send TOTP
+Server -> Server : TOTP verification
+Server -> Server : Do 'Stellar' Process
+Server -> DB : send key and vehicle no.
+end
+end
+opt exit
+opt login
+App -> Server : request shared-key (send vehicle no.)
+Server -> Server : compare(Camera's vehicle no., App's vehicle no.)
+Server -> DB : get key where vehicle no.
+App -> App : implements TOTP
+App -> Server : send TOTP
+Server -> Server : TOTP verification
+Server -> Server : Do 'Stellar' Process
+Server -> App : notification
+App -> App : DELETE shared-key
+Server -> DB : send DELETE key and vehicle no.
+end
+end
