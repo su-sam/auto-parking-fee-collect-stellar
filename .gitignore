@@ -5,5 +5,6 @@ node_modules/
 **/lab/test-entry-md.js
 **/lab/test-exit-md.js
 **/lab/txViewer.js
+**/lab/test-mongoDB.js
 .vscode
 **/lab/calculate-duration.js

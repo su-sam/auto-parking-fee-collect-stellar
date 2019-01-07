@@ -20,6 +20,8 @@
     "base-64": "^0.1.0",
     "js-xdr": "^1.0.5",
     "moment": "^2.23.0",
+    "mongoose": "^5.4.2",
+    "otplib": "^10.0.1",
     "stellar-base": "^0.10.0",
     "stellar-sdk": "^0.11.0"
   }
