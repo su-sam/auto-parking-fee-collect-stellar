@@ -3,58 +3,58 @@
 title Automatic Parking Fee Collection w/t Stellar
 
 opt enter
-Car->Camera: license plate
-Camera->entry-BLE: license plate img
-entry-BLE -> openALPR : get camera.$license
-openALPR -> entry-BLE : camera.$license
+Car->entryCamera: license plate
+entryCamera->Node: license plate img
+Node -> openALPR : get camera.$license
+openALPR -> Node : camera.$license
 
-entry-BLE -> App: challenge + $BLEAccID
-App -> entry-BLE: response + BLE.tx.mD(App.$appAccID, App.$license)
+Node -> App: challenge + $nodeAccID
+App -> Node: response + node.tx.mD(App.$appAccID, App.$license)
 
-entry-BLE -> entry-BLE:compare(camera.$license,App.$license)
+Node -> Node:compare(camera.$license,App.$license)
 
-entry-BLE -> Stellar : sign(BLE.tx.mD(App.$appAccID, App.$license)
-Stellar -> entry-BLE : $txEnterMDID
-entry-BLE -> App : $txEnterMDID
+Node -> Stellar : sign(node.tx.mD(App.$appAccID, App.$license)
+Stellar -> Node : $txEnterMDID
+Node -> App : $txEnterMDID
 
-entry-BLE -> entry-Gate: open gate command
+Node -> entry-Gate: open gate command
 end
 
 
 
 opt exit
-Car->Camera: license plate
-Camera->exit-BLE: license plate img
-exit-BLE -> openALPR : get camera.$license
-openALPR -> exit-BLE : camera.$license
+Car->exitCamera: license plate
+exitCamera->Node: license plate img
+Node -> openALPR : get camera.$license
+openALPR -> Node : camera.$license
 
-exit-BLE -> App: challenge + $BLEAccID
-App -> App : compare(Enter.$BLEAccID, Exit.$BLEAccID)
-App -> exit-BLE:  response + $txEnterMDID + BLE.tx.mD(App.$appAccID, empty)
+Node -> App: challenge + $nodeAccID
+App -> App : compare(Enter.$nodeAccID, Exit.$nodeAccID)
+App -> Node:  response + $txEnterMDID + node.tx.mD(App.$appAccID, empty)
 
-exit-BLE -> Stellar :  get $sourceID, mD(App.$appAccID), mD(App.$license) where App.$txEnterMDID
-Stellar -> exit-BLE : $sourceID, mD(App.$appAccID), mD(App.$license)
+Node -> Stellar :  get $sourceID, mD(App.$appAccID), mD(App.$license) where App.$txEnterMDID
+Stellar -> Node : $sourceID, mD(App.$appAccID), mD(App.$license)
 
-exit-BLE -> exit-BLE : compare($sourceID, $BLEAccID)
-exit-BLE -> exit-BLE: compare(mD(App.$license), camera.$license)\ncompare(mD(App.$appAccID), App.$appAccID)
+Node -> Node : compare($sourceID, $nodeAccID)
+Node -> Node: compare(mD(App.$license), camera.$license)\ncompare(mD(App.$appAccID), App.$appAccID)
 
-exit-BLE -> Stellar : sign(BLE.tx.mD(App.$appAccID, empty))
-Stellar -> exit-BLE : $txExitMDID
+Node -> Stellar : sign(node.tx.mD(App.$appAccID, empty))
+Stellar -> Node : $txExitMDID
 
-exit-BLE -> Stellar : get $EnterTimeStamp, $ExitTimeStamp where $txEnterMDID, $txExitMDID
-Stellar -> exit-BLE : $EnterTimestamp, $ExitTimeStamp
+Node -> Stellar : get $EnterTimeStamp, $ExitTimeStamp where $txEnterMDID, $txExitMDID
+Stellar -> Node : $EnterTimestamp, $ExitTimeStamp
 
-exit-BLE -> exit-BLE : calculate $amount
+Node -> Node : calculate $amount
 
-exit-BLE -> App: $BLEAccID + $amount
+Node -> App: $nodeAccID + $amount
 
-App -> App : compare(new.$BLEAccID, exist.$BLEAccID)
-App -> exit-BLE: sign(BLE&App.tx.memo(App.@).payment($BLEAccID, $amount))
+App -> App : compare(new.$nodeAccID, exist.$nodeAccID)
+App -> Node: sign(Node&App.tx.payment($nodeAccID, $amount))
 
-exit-BLE -> exit-BLE : compare(payment(destination.$BLEAccID), $BLEAccID)\ncompare(payment(amount.$fee),$amount)\nisXLM(payment(asset))
-exit-BLE -> Stellar : sign(signed(BLEt&App.tx.payment($BLEAccID, $amount)))
-Stellar -> exit-BLE : $txPaymentID
-exit-BLE -> App : reciept
+Node -> Node : compare(payment(destination.$nodeAccID), $nodeAccID)\ncompare(payment(amount.$fee),$amount)\nisXLM(payment(asset))
+Node -> Stellar : sign(signed(Nodet&App.tx.payment($nodeAccID, $amount)))
+Stellar -> Node : $txPaymentID
+Node -> App : reciept
 
-exit-BLE -> exit-Gate: open gate command
+Node -> exit-Gate: open gate command
 end 

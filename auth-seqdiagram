@@ -2,35 +2,38 @@
 Help me @https://auth0.com/blog/different-ways-to-implement-multifactor/
 
 title TOTP authentication
-Camera -> Server : send license plate img
-Server -> openALPR : get vehicle no.
-openALPR -> Server : vehicle no.
 opt entry
+entryCamera -> Node : send license plate img
+Node -> openALPR : get vehicle no.
+openALPR -> Node : vehicle no.
 opt enrollment
-App -> Server : request shared-key (send vehicle no.)
-Server -> Server : compare(Camera's vehicle no., App's vehicle no.)
-Server -> Server : generate key
-Server -> App: share shared-key
+App -> Node : request shared-key (send vehicle no.)
+Node -> Node : compare(Camera's vehicle no., App's vehicle no.)
+Node -> Node : generate key
+Node -> App: share shared-key
 end
 opt login
 App -> App : implements TOTP
-App -> Server : send TOTP
-Server -> Server : TOTP verification
-Server -> Server : Do 'Stellar' Process
-Server -> DB : send key and vehicle no.
+App -> Nosw : send TOTP
+Node -> Node : TOTP verification
+Node -> Node : Do 'Stellar' Process
+Node -> DB : send key and vehicle no.
 end
 end
 opt exit
+exitCamera -> Node : send license plate img
+Node -> openALPR : get vehicle no.
+openALPR -> Node : vehicle no.
 opt login
-App -> Server : request shared-key (send vehicle no.)
-Server -> Server : compare(Camera's vehicle no., App's vehicle no.)
-Server -> DB : get key where vehicle no.
+App -> Node : request shared-key (send vehicle no.)
+Node -> Node : compare(Camera's vehicle no., App's vehicle no.)
+Node -> DB : get key where vehicle no.
 App -> App : implements TOTP
-App -> Server : send TOTP
-Server -> Server : TOTP verification
-Server -> Server : Do 'Stellar' Process
-Server -> App : notification
+App -> Node : send TOTP
+Node -> Node : TOTP verification
+Node -> Node : Do 'Stellar' Process
+Node -> App : notification
 App -> App : DELETE shared-key
-Server -> DB : send DELETE key and vehicle no.
+Node -> DB : send DELETE key and vehicle no.
 end
 end
