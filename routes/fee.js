@@ -4,7 +4,7 @@ const StellarSdk = require("stellar-sdk");
 StellarSdk.Network.useTestNetwork();
 const server = new StellarSdk.Server("https://horizon-testnet.stellar.org");
 
-const { User } = require("../models/sharedKey");
+const { User } = require("../models/key");
 const { validate } = require("../models/fee");
 
 const router = express.Router();
@@ -23,7 +23,7 @@ router.post("/:vehicleNo", async (req, res) => {
         // Node calculate fee
         const amount = calculateFee(enterTimestamp, exitTimestamp);
         // Save amount to DB
-        const user = await User.findOneAndUpdate({ vn: vehicleNo }, { amount: amount }, { new: true });
+        const user = await User.findOneAndUpdate({ vn: req.params.vehicleNo }, { amount: amount }, { new: true });
         if (!user) return res.status(404).send('The user with the given vehicle no was not found.');
 
         res.send({ "amount": amount });

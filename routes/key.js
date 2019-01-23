@@ -1,7 +1,7 @@
 const express = require("express");
 const otplib = require("otplib");
 
-const { User } = require("../models/sharedKey");
+const { User } = require("../models/key");
 
 const router = express.Router();
 

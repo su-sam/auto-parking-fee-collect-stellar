@@ -4,5 +4,5 @@ const otplib = require("otplib");
 function implementTOTP(secret) {
     return otplib.authenticator.generate(secret); //token
 }
-x = implementTOTP("MJWEY23IPFFCWZLKLJCVSKZWGBWVKTCE");
+x = implementTOTP("MZSEKS3LPFEVM42MKVHWSQ3IIZSDSUCQ");
 console.log(x);

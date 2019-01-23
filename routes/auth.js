@@ -1,7 +1,7 @@
 const express = require("express");
 const otplib = require("otplib");
 
-const { User, validate } = require("../models/sharedKey");
+const { User, validate } = require("../models/key");
 
 const router = express.Router();
 
@@ -21,8 +21,7 @@ router.post("/:vehicleNo", async (req, res) => {
         token = req.body.totp;
         const isValid = await verifyTOTP(token, data[0].key);
         if (isValid) res.send({ "status": "verified", "accID": "GDA4TJRV3D5LEIJJGRHFLGFADDDWG37FSJCBJKRGAVQ4NLBV5MUZLFLD" });
-        return res.status(405).send("Invalid TOTP ...");
-    } catch (e) { console.error(e); res.error(e) }
+    } catch (e) { console.error(e); }
 });
 
 // FUNCTION for TOTP verification

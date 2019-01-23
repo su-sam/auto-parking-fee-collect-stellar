@@ -1,4 +1,4 @@
-const sharedKey = require("./routes/sharedKey");
+const key = require("./routes/key");
 const auth = require("./routes/auth");
 const submitXdr = require("./routes/xdr");
 const calFee = require("./routes/fee");
@@ -14,7 +14,7 @@ app.use(express.json());
 
 
 //router that url path
-app.use("/key", sharedKey);
+app.use("/key", key);
 app.use("/auth", auth);
 app.use("/xdr", submitXdr);
 app.use("/fee", calFee);
@@ -26,5 +26,5 @@ mongoose.connect('mongodb://localhost/users')
   .catch(err => console.error('Could not connect to MongoDB...'));
 
 //network connection
-const port = process.env.PORT || 3024;
+const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Listening on port ${port}...`));

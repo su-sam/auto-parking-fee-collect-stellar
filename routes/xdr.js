@@ -5,7 +5,7 @@ const server = new StellarSdk.Server("https://horizon-testnet.stellar.org");
 const { Transaction } = require("stellar-base");
 const { validateXdr } = require("../models/xdr");
 const { validateXdrTx } = require("../models/xdrNTx");
-const { User } = require("../models/sharedKey");
+const { User } = require("../models/key");
 
 // assume camera vehicle no
 const camVehicleNo = "6784";
