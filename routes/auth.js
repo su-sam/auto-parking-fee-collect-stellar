@@ -20,7 +20,7 @@ router.post("/:vehicleNo", async (req, res) => {
 
         token = req.body.totp;
         const isValid = await verifyTOTP(token, data[0].key);
-        if (isValid) res.send({ "status": "verified", "accID": "GDA4TJRV3D5LEIJJGRHFLGFADDDWG37FSJCBJKRGAVQ4NLBV5MUZLFLD" });
+        if (isValid) res.send({ "status": "verified", "accId": "GDA4TJRV3D5LEIJJGRHFLGFADDDWG37FSJCBJKRGAVQ4NLBV5MUZLFLD" });
     } catch (e) { console.error(e); }
 });
 
